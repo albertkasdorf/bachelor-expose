@@ -1,0 +1,316 @@
+\documentclass[12pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{graphicx}
+  \graphicspath{ {images/} }
+\usepackage{comment}
+\usepackage[ngerman]{babel}
+\usepackage[babel, german=quotes]{csquotes}
+\usepackage[a4paper]{geometry}
+
+% Quelltexte (Programmlistings)
+\usepackage{listings}
+  % Listings caption [duplicate]
+  % https://tex.stackexchange.com/questions/54819/listings-caption
+  \renewcommand{\lstlistingname}{Auflistung}
+  
+\usepackage{url}
+\usepackage{hyperref}
+
+% The biblatex Package - Programmable Bibliographies and Citations
+% 	- http://ftp.math.purdue.edu/mirrors/ctan.org/macros/latex/exptl/biblatex/doc/biblatex.pdf
+% Biblatex citation order
+%	- https://tex.stackexchange.com/questions/51434/biblatex-citation-order
+\usepackage[
+	backend=biber,
+	style=numeric-comp,
+	%sorting=ydnt,					% Sort by year (descending), name, title.
+	sorting=none,					% Do not sort at all. All entries are processed in citation order.
+]{biblatex}
+	\addbibresource{C:\\Users\\Albert\\Documents\\Studium\\Bachelor WS17\\sources.bib}
+
+% How can I use @author, @date, and @title after maketitle?
+% https://tex.stackexchange.com/questions/27710/how-can-i-use-author-date-and-title-after-maketitle
+\usepackage{titling}
+	\title{Range Only Simultaneous Localization and Mapping with Ultra-Wideband}
+	\author{Albert Kasdorf}
+
+% Page layout in LATEX
+% http://www.ntg.nl/maps/16/29.pdf
+\usepackage{fancyhdr}
+	\pagestyle{fancy}
+	\lhead{}\chead{}\rhead{}
+	\lfoot{}\cfoot{\thepage}\rfoot{}
+	\renewcommand{\headrulewidth}{0.0pt}
+	\renewcommand{\footrulewidth}{0.4pt}
+
+% siunitx — A comprehensive (SI) units package
+% http://www.bakoma-tex.com/doc/latex/siunitx/siunitx.pdf
+\usepackage{siunitx}
+
+\usepackage{tikz}
+
+\begin{document}
+
+%
+% Titlepage
+%
+\thispagestyle{empty}
+\begin{titlepage}
+	\tikz[remember picture,overlay]
+	\node[anchor=north east,inner sep=1cm] at (current page.north east) {\includegraphics[height=4.9cm]{fh-logo-right.png}};
+
+  \vspace*{\fill}
+  \centering
+  \Huge
+  \thetitle\par
+  \normalsize
+  Exposé zur Bachelorarbeit\par
+  \vspace{0.25cm}
+  \normalsize
+  FH Aachen\par
+  Elektrotechnik und Informationstechnik\par
+  Fachgebiet Robotik\par
+  \vspace{0.5cm}
+  Albert Kasdorf\par
+  Matr.-Nr.: 3029294\par
+  %\vspace{0.5cm}
+  %März -- Juli 2017\par
+  %01.03.2017 bis 31.07.2017\par
+  \vspace{0.5cm}
+  Betreuer:\par
+  Prof. Dr. rer. nat. Alexander Ferrein\par
+  \vspace{\fill}
+\end{titlepage}
+
+
+%
+% Table of contents
+%
+%\newpage
+%\thispagestyle{empty}
+%\tableofcontents
+
+
+%
+% Problemstellung:
+% - Welches wissenschaftlich relevante Problem ist der Ausgangspunkt der Arbeit und warum handelt es sich dabei um ein Problem?
+%
+\newpage
+\setcounter{page}{1}
+\section{Problemstellung}
+In der Zeit vor den Navigationsgeräten wurden auf deutschen Straßen noch regelmäßig faltbare Straßenkarten von den Beifahrern verwendet um den Fahrer den Weg zu weisen. Bevor eine Straßenkarten verwendet werden kann, muss diese Erstellt werden. Dieser Prozess ist unter dem Begriff Kartenerstellung (engl. Mapping) bekannt. Der Detailgrad hängt dabei stark vom Verwendungszweck ab. Der erste Schritt nach dem entfalten der Straßenkarten bestand in der Lokalisierung (engl. Localization), also der Bestimmung der ungefähren Fahrzeugposition und dem Ziel der Reise auf der Straßenkarte. Darauf aufbauend wurde vom Beifahrer dann eine Route zwischen der aktuellen Fahrzeugposition und dem Ziel geplant und während der Fahrt weiter verfolgt, was auch als Pfad-Planung (engl. Path-Planning) bekannt ist.
+
+Genauso wie der menschliche Agent muss auch jeder mobile Roboter für sich diese grundlegende Frage beantworten können. \glqq Wo bin ich?\grqq{}, \glqq Wo bin ich bereits gewesen?\grqq, \glqq Wohin gehe ich?\grqq{} und \glqq Welcher ist der beste Weg dahin?\grqq{}.
+
+Außerhalb von geschlossenen Räumlichkeiten (engl. Outdoor) erfolgt die Lokalisierung in der Regel mittels GPS, unter der Voraussetzung das eine ungehinderte Verbindung zu den GPS-Satelliten möglich ist. Die Lokalisierung ist in diesem Fall sehr einfach, da die GPS Koordinaten eindeutig sind und das Kartenmaterial bereits im gleichen Koordinatensystem vorliegt.
+
+Innerhalb geschlossener Räumlichkeiten (engl. Indoor), wie in öffentlichen Gebäuden, Logistikhallen oder auch in Bergwerken, ist eine Lokalisierung mittels GPS nicht mehr möglich. Erschwerend kommt dazu, dass es in der Regel zu diesen Räumlichkeiten keine öffentlich verfügbaren Karten gibt oder diese sich wie im letzten Beispiel häufig ändern. Aus diesem Problemfeld haben sich Algorithmen für die Simultane Lokalisierung und Kartenerstellen (engl. Simultaneous Localization and Mapping (SLAM)) entwickelt.
+
+Häufig werden SLAM Algorithmen verwendet um aus Kamerabildern oder \SI{360}{\degree} Abstandsmessungen eine Karte der Umgebung zu erstellen und sich in der gleichen zu lokalisieren. Der Fokus dieser Arbeit liegt jedoch auf den reinen Entfernungsbasieren SLAM (engl. Range Only SLAM (RO--SLAM)) Algorithmen. Hierbei werden nur die Informationen der Eigenbewegung und die Entfernungen zu mehreren, vorher unbekannten, Basisstationen genutzt um sich selbst zu Lokalisieren und eine Karte mit den Positionen der Basisstationen zu erstellen.
+
+
+%
+% Erkenntnisinteresse
+%
+%\section{Erkenntnisinteresse}
+%	\begin{comment}
+%	- Warum soll ausgerechnet dieses Problem behandelt werden? Wie kommt es zu dem Thema?
+%	- Welche Originalität wird bei der Bearbeitung bewiesen? (z. B. Eigenständigkeit des Konzepts; der Darstellung, Verdichtung oder Verknüpfung einzelner Aspekte; der Kommentierung bereits vorliegender Erkenntnisse, etc.)
+%	- Warum bearbeite ich diese Fragestellung?
+%	- Was interessiert mich an dieser Sache oder diesem Problem?
+%	- Welches Ziel möchte ich mit meiner Arbeit oder meinen Überlegungen erreichen?
+%	\end{comment}
+%	\begin{itemize}
+%		\item Also Ingenieur-Informatiker lebt man zwischen verschieden Welten.
+%		\item Zum einen besteht bei mir ein großes Interesse an dem zusammenstellen von Hardwarebausteinen zu einer größeren Aufgaben erfüllenden Einheit. (UWB-Module)
+%		\item Verbindung zwischen Low-Level Hardware und der High-Level Software.
+%		\item Auf der andren Seite aber auch das bereitstellen von High-Level Systemen um größere Aufgabenkomplexe zu erfüllen. (RO-SLAM)
+%		\item Zusätzlich möchte ich mein Wissen im Bereich der Grundlegenden Themen der Robotik wie Wahrscheinlichkeitsmodell/-theorie, Bayes/Kalman Filter und den darauf aufbauenden SLAM Verfahren vertiefen.
+%	\end{itemize}
+
+
+%
+% Fragestellung:
+% - Mit diesem Schritt soll das Thema weiter eingegrenzt werden.
+% - Auf welche zentrale Frage soll in der Arbeit eine Antwort gefunden oder gegeben werden?
+%
+\section{Fragestellung}
+\begin{itemize}
+	\item UWB
+	\begin{itemize}
+		\item Welche elektrische Beschaltung ist notwendig um das DWM1000 Modul von DecaWave in Betrieb nehmen zu können?
+		\item Wie erfolgt die Entfernungsmessung zwischen den einzelnen UWB--Modulen?
+		\item Wie erfolgt der Datenaustausch zwischen einem UWB--Modul und der Verarbeitungseinheit?
+		\item Kann über die Kalibrierung der Antennenverzögerung eine genauere Entfernungsmessung erreicht werden?
+		\item Wie verändert sich die Genauigkeit der Entfernungsmessung bei einer direkten Sichtverbindung (engl. Line--of--sight (LOS)) und indirekten Sichtverbindung (engl. Non--line--of--sight (NLOS))?
+	\end{itemize}
+	\item RO--SLAM
+	\begin{itemize}
+		\item Ist ein RO--SLAM mit den selbstgebauten UWB--Modulen möglich?
+		\item Welche Hardware-- und Software--Konfiguration ist für ein RO--SLAM notwendig?
+		\item Wie genau kann der RO--SLAM die eigene Positionen und die der Basisstationen schätzen?
+	\end{itemize}
+\end{itemize}
+
+
+%
+% Hypothesen:
+% - Was soll mit den Ausführungen erreicht werden?
+% - Was soll belegt oder widerlegt werden?
+%
+\section{Hypothesen}
+\begin{itemize}
+	\item Die Kalibrierung der Antennenverzögerung verbessert die Genauigkeit der Entfernungsmessung signifikant.
+	\item Indoor kann eine Lokalisierung mit einer Genauigkeit von \SI{10}{\cm} erreicht werden.
+	\item Das Mobile Robot Programming Toolkit (MRPT) verfügt über ein Robot Operating System (ROS)--Modul, das einen RO--SLAM implementiert.
+	\item Mit dem RO--SLAM ist es möglich sowohl die eigene Position als auch die der Basisstation mit einer Genauigkeit von \SI{10}{\cm} zu schätzen.
+\end{itemize}
+
+
+%
+% Forschungsstand:
+%
+% - Welche wissenschaftlichen Erkenntnisse liegen zu dem Thema bereits vor?
+% - Grundsätzlich gibt es zwei Möglichkeiten, einen Forschungsstand zu schreiben: Entweder ordnen Sie Ihren Literaturüberblick nach Themenkomplexen oder Sie geben einen rein chronologischen Überblick über die wichtigsten Publikationen.
+% - Auf keinen Fall sollten Sie den Forschungsstand zu voll packen. Es geht nicht darum, dem Leser zu zeigen, was Sie alles studiert haben (wie fleißig Sie waren), sondern um einen kompakten Überblick über die wichtigste Literatur.
+% - Wichtig: Listen Sie die Literatur nicht nur auf, sondern erklären Sie, welchen Beitrag die jeweilige Publikation zum Erkenntnisgewinn geleistet hat. Also, zum Beispiel: Was hat der Autor als Erster erkannt oder hinterfragt? Es muss ja einen Grund geben, weshalb Sie die betreffende Publikation unter die Meilensteine reihen – und den sollten Sie dem Leser deutlich machen.
+%
+\section{Forschungsstand}
+
+Einen guten Überblick über die Eigenschaften der Drahtlosen-Protokolle (engl. Wireless Protocols) Bluetooth, UWB, ZigBee und WiFi liefert die Arbeit \cite{lee2007comparative} von \citeauthor{lee2007comparative}.
+
+In \cite{smith1987closed} wird das grundlegende Prinzip erklärt um aus mehreren bekannten Sensoren die Position eines beweglichen Empfängers zu berechnen.
+
+Der theoretische Hintergrund des SLAM--Verfahrens wird in \cite{dissanayake2001solution} vorgestellt. Zusätzlich wird bewiesen das die Unsicherheit bei der Kartenerstellung und Lokalisierung eine untere Schranke erreicht.
+
+\citeauthor{kantor2002preliminary} stellen in Ihrer Arbeit \cite{kantor2002preliminary} ein Lokalisierungsverfahren vor, welches die Roboterposition anhand von Entfernungsmessungen zu vorher bekannten Landmarken bestimmen kann. Im letzten Abschnitt wird SLAM--Verfahren vorgestellt, welches über einen Kalman--Filter die Unsicherheit der Landmarkenposition modellieren kann.
+
+Die Autoren \citeauthor{blanco2008pure} gehen in ihren Arbeiten \cite{blanco2008pure, blanco2008efficient} einen Schritt weiter und bestimmen die unbekannte Roboterposition sowie die unbekannten Landmarkenpositionen. Hierzu nutzen Sie im ersten Schritt einen Partikelfilter (engl. Particle Filter) bis die Schätzung eine ausreichende Genauigkeit erreicht hat um dann im zweiten Schritt über einen Kalman--Filter ein Positionsverfolgung (engl. Position Tracking) durchzuführen.
+
+Die Arbeit \cite{ledergerber2015robot} von \citeauthor{ledergerber2015robot} gehen auf die Roboterlokalisierung unter Verwendung einer One-Way Ultra-Wideband Kommunikation ein. Dieses hat den Vorteil, das mit sehr wenigen Landmarken eine große Anzahl von Roboter lokalisiert werden kann.
+
+
+%
+% Methodische Herangehensweise:
+%
+% - Mit welchen wissenschaftlichen Methoden soll das Problem bearbeitet werden?
+% - Welche Methoden bieten sich an, die (Leit-)Fragen und Hypothesen angemessen zu bearbeiten? (theoretisch oder empirisch, Primär- oder Sekundäranalyse, qualitativ oder quantitativ, Diskursanalyse oder Untersuchung, eine Kombination der Methoden, etc.)
+% - Warum sind die ausgewählten Methoden geeignet, das Thema zu bearbeiten?
+% - Welche Methoden sollen zur Beantwortung der Frage dienen, wie sollen die Quellen ausgewertet werden?
+% - Für empirische Arbeiten: Informationen über das Forschungsdesign, z.B. Größe der Stichprobe, Variablen, Datenauswertung
+%
+\section{Methodische Herangehensweise}
+Der Überblick und Vergleich der verschiedenen Abstandsbestimmungsverfahren erfolgt über eine klassische Literatursuche, siehe \cite{lee2007comparative, herranz2010studying, zekavat2011handbook}.
+
+Vor der Herstellung der UWB--Module werden die Produktspezifikationen des Herstellers untersucht um aus diesen die notwendige Beschaltung herzuleiten, siehe \cite{decawave2016dwm1kdatasheet, decawave2013power}. Zusätzlich werden Erfahrungsberichte aus dem Internet ausgewertet um die Beschaltung weiter zu verfeinern, siehe \cite{Trojer2015, Holder2016, Holder2016a}.
+
+Der initiale Aufbau erfolgt zu Evaluationszwecken auf einem Steckboard und zusätzlich auf einer separaten Lochstreifenplatine um das Zusammenspiel zweier UWB--Module zu testen. Nach dem erfolgreichen Systemtest wird aus dem erstellten Schaltplan, ein PCB--Layout erstellt, mehrere PCB--Boards bestellt und nach der Lieferung zusammengebaut und noch mal getestet.
+
+Das Verfahren zur Entfernungsmessung wird der Hersteller--Dokumentation entnommen und mit der Software--Implementierung verglichen, siehe \cite{decawave2015twr, decawave2014error, Trojer2015}.
+
+Das Verfahren zur Kalibrierung der Antennenverzögerung kann ebenfalls der Hersteller--Dokumentation entnommen werden, siehe \cite{decawave2014calibration}. Hierfür muss ein Versuchsaufbau erstellt werden. Zusätzlich wird eine Anpassung der Steuer--/Auswerte-Software notwendig, um die Verzögerung zu berechnen.
+
+Die Genauigkeitsbestimmung der Entfernungsmessung mit LOS und NLOS wird über einen Versuchsaufbau realisiert. Hierfür werden mehrere Messreihen in verschiedenen Abständen aufgenommen und mit der tatsächlichen Entfernung verglichen.
+
+Wie Qualität der Positionsschätzung des RO--SLAM wird über einen Versuchsaufbau geklärt. Hierfür werden mehrere Basisstationen in einem Rechteck angeordnet. Der Roboter fährt nun innerhalb des Rechtecks eine vorher abgemessene Strecke ab. Hierdurch kann ermittelt werden, die groß die Abweichungen der Schätzung von der tatsächlichen Position ist.
+
+
+%
+% Gliederungsentwurf
+%
+\section{Gliederungsentwurf}
+\begin{enumerate}
+	\item Einführung
+	\begin{enumerate}
+		\item Aufgabenstellung			% RO-SLAM mit UWB
+		\item Motivation					% Einsatz in Gebieten ohne GPS
+		\item Zielsetzung					% Entwickeln eines Gesamtsystems füs das RO-SLAM
+		\item Gliederung					% Wie ist die Arbeit aufgebaut
+	\end{enumerate}
+	\item Grundlagen / Stand der Forschung und Theorie
+	\begin{enumerate}
+		\item Verfahren für die Reichweiten-Bestimmung
+		\item Wahrscheinlichkeitstheorie
+		\item Bayes/Kalman/Partikel Filter
+		\item SLAM
+		\item ROS								% Pub/Sub, TF-Tree, Architektur
+	\end{enumerate}
+	\item Ultra-Wideband
+	\begin{enumerate}
+		\item Historie
+		\item Alternative Technologien
+		\item Gegenüberstellung
+		\item Erstelle Hardware
+		\begin{enumerate}
+			\item Elektrischer Aufbau
+			\item Platinendesign
+			\item Steuersoftware
+			\item Entfernungsmessung und Auswertung		% LOS/NLOS
+			\item Kalibrierung
+		\end{enumerate}
+	\end{enumerate}
+	\item RO-SLAM
+	\begin{enumerate}
+		\item Roboterplattform				% Komponenten
+		\item Softwarearchitektur		% Flow Diagramme
+		\begin{enumerate}	
+			\item ROS Module
+			\item MRPT Module
+		\end{enumerate}
+		\item Versuchsaufbau				% Robotino/LIDAR/UWB
+		\item Ergebnisse und Auswertung
+	\end{enumerate}
+\item Zusammenfassung / Fazit
+\item Ausblick
+\end{enumerate}
+
+
+%
+% Zeitplan
+%
+\section{Zeitplan}
+Der vorgegebene zeitliche Rahmen für die Bachelorarbeit beträgt ca. 10 Wochen. Die folgenden Wochenangaben beziehen sich auf die Zeit ab der Anmeldung.
+
+\begin{table}[h!]
+	\centering
+	\begin{tabular}{||c|c||l||}
+		\hline
+		Woche & KW & Aufgabe\\	\hline\hline
+		01 & 48 & Anmeldung zur Bachelorarbeit\\\hline
+		02 & 49 & Beschreibung \\\hline
+		03 & 50 & UWB Historie, Gegenüberstellung, Aufbau\\\hline
+		04 & 51 & UWB Entfernungsmessung, Kalibrierung und Auswertung\\\hline
+		05 & 52 & RO--SLAM Architektur\\\hline
+		06 & 01 & RO--SLAM Auswertung der Versuchsergebnisse\\\hline
+		07 & 02 & Einführung und Zusammenfassung\\\hline
+		08 & 03 & Grundlagen und Stand der Forschung\\\hline
+		09 & 04 & Grundlagen und Stand der Forschung\\\hline
+		10 & 05 & Korrektur lesen und Überarbeitung der Bachelorarbeit\\\hline\hline
+		11 & 06 & Drucken und Abgabe der Bachelorarbeit\\\hline
+		12 & 07 & Puffer \\\hline
+		13 & 08 & Kolloquium \\\hline
+	\end{tabular}
+	\caption{Zeitplan}
+	\label{table:zeitplan}
+\end{table}
+
+
+%
+% Literatur
+% http://linorg.usp.br/CTAN/macros/latex/contrib/biblatex/doc/biblatex.pdf
+% 		- bibnumbered, bibintoc
+\newpage
+\nocite{mcelroy2014comparison}
+\nocite{herranz2014comparison}
+\nocite{gonzalez2009mobile}
+\nocite{durrant2006simultaneous}
+\nocite{thrun2005probabilistic}
+\nocite{schroeder2005low}
+\nocite{smith2004tracking}
+\printbibliography[heading=bibnumbered]
+
+
+\end{document}
